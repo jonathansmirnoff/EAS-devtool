@@ -8,8 +8,9 @@ import { ThemeProvider } from "./theme/theme-provider.tsx";
 import { Analytics } from "@vercel/analytics/react";
 import {ChakraProvider} from "@chakra-ui/react"
 
+
 const client = new ApolloClient({
-  uri: "https://sepolia.easscan.org/graphql",
+  uri: import.meta.env.VITE_INDEXER_URL as string,
   cache: new InMemoryCache(),
 });
 

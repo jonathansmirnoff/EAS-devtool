@@ -68,6 +68,7 @@ export const HomeScreen = () => {
     <div>
       <div className="flex items-center justify-between">
         <p className="text-lg font-semibold">Welcome Back!!</p>
+        {/* This has to be fixed */}
         <EasCreateSchema network='sepolia'
           signer={signer!}
           onSchemaCreated={(schemaId) => {

@@ -19,11 +19,24 @@ import { formatDateTime } from "@/utils/format";
 import { truncateString } from "@/utils/misc";
 import { EasAttest } from "eas-react";
 import { useEthersSigner } from "@/utils/wagmi-utils";
+import { rootstock, rootstockTestnet } from "viem/chains";
 
 export const SchemaDetailScreen = () => {
   const { schemaId } = useParams();
   const navigate = useNavigate();
   const signer = useEthersSigner();
+
+  const currnetChain = (() => {
+    switch (Number(import.meta.env.VITE_CHAIN_ID)) {
+      case rootstock.id:
+        return rootstock;
+      case rootstockTestnet.id:
+        return rootstockTestnet;
+      default:
+        console.log("Invalid chain ID. Returning Default configuration");
+        return rootstockTestnet;
+    }
+  })();
 
   const { loading, error, data } = useQuery(GET_SCHEMA_BY_ID, {
     variables: {
@@ -106,7 +119,7 @@ export const SchemaDetailScreen = () => {
           </dt>
           <dd className="pb-3 pt-1 text-zinc-950 sm:border-t sm:border-zinc-950/5 sm:py-3 dark:text-white dark:sm:border-white/5 sm:[&:nth-child(2)]:border-none">
             <a
-              href={`https://sepolia.etherscan.io/tx/${schema?.txid}`}
+              href={`${currnetChain.blockExplorers.default.url}/tx/${schema?.txid}`}
               target="_blank"
               rel="noopener noreferrer"
               className="text-blue-600 hover:underline"
@@ -150,6 +163,7 @@ export const SchemaDetailScreen = () => {
       </div>
 
       <div>
+        {/* This has to be fixed updating the references to eas-react */}
         <EasAttest 
         text="Attest this Schema"
         schemaId={schemaId!}
