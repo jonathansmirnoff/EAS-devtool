@@ -67,9 +67,8 @@ export const HomeScreen = () => {
   return (
     <div>
       <div className="flex items-center justify-between">
-        <p className="text-lg font-semibold">Welcome Back!!</p>
-        {/* This has to be fixed */}
-        <EasCreateSchema network='sepolia'
+        <p className="text-lg font-semibold">Welcome Back!!</p>        
+        <EasCreateSchema network={import.meta.env.VITE_NETWORK as string}
           signer={signer!}
           onSchemaCreated={(schemaId) => {
             console.log('Schema created:', schemaId);

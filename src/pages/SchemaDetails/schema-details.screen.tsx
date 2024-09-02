@@ -167,7 +167,7 @@ export const SchemaDetailScreen = () => {
         <EasAttest 
         text="Attest this Schema"
         schemaId={schemaId!}
-        network="sepolia"
+        network={import.meta.env.VITE_NETWORK as string}
         signer={signer!}
         buttonProps={{
           width: "full"
