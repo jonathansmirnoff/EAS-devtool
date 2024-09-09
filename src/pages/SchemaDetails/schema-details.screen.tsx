@@ -38,6 +38,8 @@ export const SchemaDetailScreen = () => {
     }
   })();
 
+  const network = import.meta.env.VITE_NETWORK as string;
+
   const { loading, error, data } = useQuery(GET_SCHEMA_BY_ID, {
     variables: {
       where: {
@@ -45,6 +47,32 @@ export const SchemaDetailScreen = () => {
       },
     },
   });
+
+  const fetchAttestation = async (attestationUid: string) => {
+    const response = await fetch(import.meta.env.VITE_INDEXER_URL, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        query: `
+          query GetAttestation($where: AttestationWhereUniqueInput!) {
+            getAttestation(where: $where) {
+              id
+            }
+          }
+        `,
+        variables: {
+          where: {
+            id: attestationUid,
+          },
+        },
+      }),
+    });
+  
+    const result = await response.json();
+    return result.data;
+  };
 
   if (loading) return <p>Loading...</p>;
   if (error) return <p>Error: {error.message}</p>;
@@ -167,14 +195,26 @@ export const SchemaDetailScreen = () => {
         <EasAttest 
         text="Attest this Schema"
         schemaId={schemaId!}
-        network={import.meta.env.VITE_NETWORK as string}
+        network={network}
         signer={signer!}
         buttonProps={{
           width: "full"
         }}
         onAttestationComplete={(attestation) => {
-          console.log('Attestation complete', attestation);
-          navigate(`/attestation/view/${attestation.attestationUid}`);
+          if (!(import.meta.env.VITE_ENABLE_INDEXER_WAITING as boolean)) {
+            console.log('Attestation complete', attestation);
+            navigate(`/attestation/view/${attestation.attestationUid}`);
+          }
+          
+          const interval = setInterval(async () => {
+            const data = await fetchAttestation(attestation.attestationUid);
+      
+            if (data.getAttestation && data.getAttestation.id) {
+              clearInterval(interval);
+              navigate(`/attestation/view/${attestation.attestationUid}`);
+            }
+          }, import.meta.env.VITA_WAITING_TIME as number);          
+
         }}
          />
       </div>
