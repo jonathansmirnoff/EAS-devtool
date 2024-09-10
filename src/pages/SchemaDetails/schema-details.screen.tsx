@@ -18,25 +18,12 @@ import { GET_SCHEMA_BY_ID } from "@/utils/graphql-queries";
 import { formatDateTime } from "@/utils/format";
 import { truncateString } from "@/utils/misc";
 import { EasAttest } from "eas-react";
-import { useEthersSigner } from "@/utils/wagmi-utils";
-import { rootstock, rootstockTestnet } from "viem/chains";
+import { currentChain, useEthersSigner } from "@/utils/wagmi-utils";
 
 export const SchemaDetailScreen = () => {
   const { schemaId } = useParams();
   const navigate = useNavigate();
   const signer = useEthersSigner();
-
-  const currnetChain = (() => {
-    switch (Number(import.meta.env.VITE_CHAIN_ID)) {
-      case rootstock.id:
-        return rootstock;
-      case rootstockTestnet.id:
-        return rootstockTestnet;
-      default:
-        console.log("Invalid chain ID. Returning Default configuration");
-        return rootstockTestnet;
-    }
-  })();
 
   const network = import.meta.env.VITE_NETWORK as string;
 
@@ -147,7 +134,7 @@ export const SchemaDetailScreen = () => {
           </dt>
           <dd className="pb-3 pt-1 text-zinc-950 sm:border-t sm:border-zinc-950/5 sm:py-3 dark:text-white dark:sm:border-white/5 sm:[&:nth-child(2)]:border-none">
             <a
-              href={`${currnetChain.blockExplorers.default.url}/tx/${schema?.txid}`}
+              href={`${currentChain.blockExplorers.default.url}/tx/${schema?.txid}`}
               target="_blank"
               rel="noopener noreferrer"
               className="text-blue-600 hover:underline"
@@ -205,7 +192,7 @@ export const SchemaDetailScreen = () => {
             console.log('Attestation complete', attestation);
             navigate(`/attestation/view/${attestation.attestationUid}`);
           }
-          
+
           const interval = setInterval(async () => {
             const data = await fetchAttestation(attestation.attestationUid);
       
