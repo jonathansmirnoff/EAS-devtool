@@ -64,16 +64,56 @@ export const HomeScreen = () => {
     );
   }, 0);
 
+  const network = import.meta.env.VITE_NETWORK as string;
+
+  const fetchSchema = async (schemaId: string) => {
+    const response = await fetch(import.meta.env.VITE_INDEXER_URL, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        query: `
+          query GetSchema($where: SchemaWhereUniqueInput!) {
+            getSchema(where: $where) {
+              id
+            }
+          }
+        `,
+        variables: {
+          where: {
+            id: schemaId,
+          },
+        },
+      }),
+    });
+  
+    const result = await response.json();
+    return result.data;
+  };
+
   return (
     <div>
       <div className="flex items-center justify-between">
-        <p className="text-lg font-semibold">Welcome Back!!</p>
-        <EasCreateSchema network='sepolia'
+        <p className="text-lg font-semibold">Welcome Back!!</p>        
+        <EasCreateSchema network={network}
           signer={signer!}
           onSchemaCreated={(schemaId) => {
-            console.log('Schema created:', schemaId);
-            // navigate to the schema details page
-            navigate(`/schema/view/${schemaId}`)
+
+            if (!(import.meta.env.VITE_ENABLE_INDEXER_WAITING as boolean)) {
+              console.log('Schema created:', schemaId);
+              navigate(`/schema/view/${schemaId}`)
+            }
+            
+            const interval = setInterval(async () => {
+              const data = await fetchSchema(schemaId);
+        
+              if (data.getSchema && data.getSchema.id) {
+                clearInterval(interval);
+                navigate(`/schema/view/${schemaId}`)
+              }
+            }, import.meta.env.VITA_WAITING_TIME as number);          
+  
           }}
         />
       </div>

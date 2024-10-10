@@ -18,12 +18,14 @@ import { GET_SCHEMA_BY_ID } from "@/utils/graphql-queries";
 import { formatDateTime } from "@/utils/format";
 import { truncateString } from "@/utils/misc";
 import { EasAttest } from "eas-react";
-import { useEthersSigner } from "@/utils/wagmi-utils";
+import { currentChain, useEthersSigner } from "@/utils/wagmi-utils";
 
 export const SchemaDetailScreen = () => {
   const { schemaId } = useParams();
   const navigate = useNavigate();
   const signer = useEthersSigner();
+
+  const network = import.meta.env.VITE_NETWORK as string;
 
   const { loading, error, data } = useQuery(GET_SCHEMA_BY_ID, {
     variables: {
@@ -32,6 +34,32 @@ export const SchemaDetailScreen = () => {
       },
     },
   });
+
+  const fetchAttestation = async (attestationUid: string) => {
+    const response = await fetch(import.meta.env.VITE_INDEXER_URL, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        query: `
+          query GetAttestation($where: AttestationWhereUniqueInput!) {
+            getAttestation(where: $where) {
+              id
+            }
+          }
+        `,
+        variables: {
+          where: {
+            id: attestationUid,
+          },
+        },
+      }),
+    });
+  
+    const result = await response.json();
+    return result.data;
+  };
 
   if (loading) return <p>Loading...</p>;
   if (error) return <p>Error: {error.message}</p>;
@@ -106,7 +134,7 @@ export const SchemaDetailScreen = () => {
           </dt>
           <dd className="pb-3 pt-1 text-zinc-950 sm:border-t sm:border-zinc-950/5 sm:py-3 dark:text-white dark:sm:border-white/5 sm:[&:nth-child(2)]:border-none">
             <a
-              href={`https://sepolia.etherscan.io/tx/${schema?.txid}`}
+              href={`${currentChain.blockExplorers.default.url}/tx/${schema?.txid}`}
               target="_blank"
               rel="noopener noreferrer"
               className="text-blue-600 hover:underline"
@@ -150,17 +178,30 @@ export const SchemaDetailScreen = () => {
       </div>
 
       <div>
+        {/* This has to be fixed updating the references to eas-react */}
         <EasAttest 
         text="Attest this Schema"
         schemaId={schemaId!}
-        network="sepolia"
+        network={network}
         signer={signer!}
         buttonProps={{
           width: "full"
         }}
         onAttestationComplete={(attestation) => {
-          console.log('Attestation complete', attestation);
-          navigate(`/attestation/view/${attestation.attestationUid}`);
+          if (!(import.meta.env.VITE_ENABLE_INDEXER_WAITING as boolean)) {
+            console.log('Attestation complete', attestation);
+            navigate(`/attestation/view/${attestation.attestationUid}`);
+          }
+
+          const interval = setInterval(async () => {
+            const data = await fetchAttestation(attestation.attestationUid);
+      
+            if (data.getAttestation && data.getAttestation.id) {
+              clearInterval(interval);
+              navigate(`/attestation/view/${attestation.attestationUid}`);
+            }
+          }, import.meta.env.VITA_WAITING_TIME as number);          
+
         }}
          />
       </div>

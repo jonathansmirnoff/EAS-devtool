@@ -7,6 +7,7 @@ import {
 import { useMemo } from "react";
 import type { Account, Chain, Client, Transport } from "viem";
 import { type Config, useClient, useConnectorClient } from "wagmi";
+import { rootstock, rootstockTestnet } from "viem/chains";
 
 export function clientToProvider(client: Client<Transport, Chain>) {
   const { chain, transport } = client;
@@ -51,5 +52,17 @@ function useEthersSigner({ chainId }: { chainId?: number } = {}) {
   const { data: client } = useConnectorClient<Config>({ chainId });
   return useMemo(() => (client ? clientToSigner(client) : undefined), [client]);
 }
+
+export const currentChain = (() => {
+  switch (Number(import.meta.env.VITE_CHAIN_ID)) {
+    case rootstock.id:
+      return rootstock;
+    case rootstockTestnet.id:
+      return rootstockTestnet;
+    default:
+      console.log("Invalid chain ID. Returning Default configuration");
+      return rootstockTestnet;
+  }
+})();
 
 export { useEthersSigner };
