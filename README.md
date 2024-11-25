@@ -42,6 +42,7 @@ Ensure you have the following installed:
 - Node.js (v14.x or later)
 - npm or yarn
 - An Ethereum wallet (e.g., MetaMask)
+- Run the indexer service: https://github.com/rsksmart/eas-indexing-service
 
 ### Installation
 
@@ -59,6 +60,15 @@ Ensure you have the following installed:
    or
    ```bash
    yarn install
+   ```
+
+3. Run:
+   ```bash
+   yarn dev
+   ```
+   or
+   ```bash
+   npm run dev
    ```
 
 ### Screenshots
